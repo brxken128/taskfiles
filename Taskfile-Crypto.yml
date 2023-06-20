@@ -1,0 +1,100 @@
+version: '3'
+
+silent: true
+
+vars:
+  TASK_BINARY: task # the name of the task executable
+  NEEDS_SETUP: false
+  TEST_ARCHS: ["x86_64-unknown-linux-gnu", "i686-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "armv7-unknown-linux-gnueabi"]
+
+tasks:
+  install-cargo-tools:
+    desc: Install all of the cargo prerequisites
+    cmds:
+      - cargo install cargo-nextest cargo-audit cargo-hack cargo-watch
+      - rustup +nightly component add miri
+      - cmd: cargo install cross --git https://github.com/cross-rs/cross
+        platforms: [amd64]
+      # cargo install cargo-nextest cargo-audit cargo-all-features cargo-watch
+      # `cargo-expand`, `cargo-llvm-lines`m `cargo-show-asm`
+      # install audit fix --features=fix?
+      # could use binstall?
+      # cargo-unused-features
+  build:
+    cmds:
+      - cargo build --release --all-features --all-targets
+  check-features:
+    cmds:
+      - cargo hack check --feature-powerset
+  test:
+    desc: Run tests
+    cmds:
+      - cargo nextest run --release --all-features
+  test-all:
+    desc: Run tests
+    cmds:
+      - cargo nextest run --release --all-features --run-ignored all
+  watch:
+    desc: Watch the current package for code changes and run tests on every change
+    cmds:
+      - cargo watch -cx 'nextest run --release'
+  miri:
+    platforms: [amd64]
+    desc: Run all tests for the current package with miri
+    cmds:
+      - cargo +nightly miri nextest run -j4 --features blake3/no_sse2
+  docs:
+    cmds:
+      - cargo doc --release --all-features --document-private-items --open
+  audit:
+    cmds:
+      - cargo audit
+  cross-test:
+    platforms: [amd64]
+    internal: true
+    run: when_changed
+    cmds:
+      - cross +nightly test --release --all-targets --all-features --target {{.TARGET}}
+  test-all-architectures:
+    platforms: [amd64]
+    internal: true
+    cmds:
+      - task: cross-test
+        vars: { TARGET: 'x86_64-unknown-linux-gnu' }
+      - task: cross-test
+        vars: { TARGET: 'i686-unknown-linux-gnu' }
+      - task: cross-test
+        vars: { TARGET: 'aarch64-unknown-linux-gnu' }
+      - task: cross-test
+        vars: { TARGET: 'armv7-unknown-linux-gnueabi' }
+  ci:
+    deps: [clean]
+    cmds:
+      - cargo clippy --release --all-features --all-targets
+      - task: check-features
+      - task: test-all-architectures
+      - task: miri
+      - task: test-all
+  clean:
+    run: once
+    desc: Clean all output directories (on Windows, only the top `node_modules` is removed)
+    cmds:
+      - cargo clean
+      - cmd: find . -name "node_modules" -type d -prune -exec rm -rf "{}" \;
+        platforms: [darwin, linux]
+      - cmd: find . -name "dist" -type d -prune -exec rm -rf "{}/*" \;
+        platforms: [darwin, linux]
+      - cmd: del /s /f /q node_modules */node_modules */*/node_modules
+        platforms: [windows]
+      - task: setup-scripts
+    aliases: [c]
+  setup-scripts:
+    desc: Runs the appropriate setup scripts for MacOS amd Windows
+    status:
+      - echo '{{if eq {{.NEEDS_SETUP}} false}}false{{end}}'
+        msg: The setup script is not required for the crypto crate.
+    cmds:
+      - cmd: ../../.github/scripts/setup-system.sh
+        platforms: [darwin]
+      - cmd: ../../.github/scripts/setup-system.ps1
+        platforms: [windows]
