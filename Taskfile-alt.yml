@@ -1,0 +1,68 @@
+version: '3'
+
+silent: true
+
+# includes:
+#   crypto:
+#     taskfile: crates/crypto/Taskfile.yml
+#     dir: crates/crypto
+
+vars:
+  TASK_BINARY: task # the name of the task executable
+
+tasks:
+  default:
+    desc: Lists all commands
+    cmds:
+      - '{{.TASK_BINARY}} --list-all'
+  setup:
+    desc: Runs `pnpm i` && `pnpm prep`
+    cmds:
+      - pnpm i
+      - pnpm prep
+  csetup:
+    desc: Cleans all output directories and runs `pnpm i` && `pnpm prep`
+    deps: [clean]
+    cmds:
+      - task: setup
+  cdev:
+    desc: Cleans all output directories and runs `pnpm i` && `pnpm prep` && `pnpm desktop dev`
+    deps: [csetup]
+    cmds:
+      - pnpm desktop dev
+  cbuild:
+    desc: Cleans all output directories and runs `pnpm i` && `pnpm prep` && `pnpm desktop build`
+    deps: [csetup]
+    cmds:
+      - pnpm desktop build
+  clean:
+    run: once
+    desc: Clean all output directories (on Windows, only the top `node_modules` is removed)
+    cmds:
+      - cargo clean
+      - cmd: find . -name "node_modules" -type d -prune -exec rm -rf "{}" \;
+        platforms: [darwin, linux]
+      - cmd: find . -name "dist" -type d -prune -exec rm -rf "{}/*" \;
+        platforms: [darwin, linux]
+      - cmd: rmdir /s /q node_modules
+        platforms: [windows]
+      - task: setup-extras
+    aliases: [c]
+  setup-extras:
+    internal: true
+    cmds:
+      - cmd: .github/scripts/setup-system.sh
+        platforms: [darwin]
+      - cmd: rm -rf "$HOME/Library/Application\ Support/spacedrive/"
+        platforms: [darwin]
+      - cmd: .github/scripts/setup-system.ps1
+        platforms: [windows]
+  merge-main:
+    vars:
+      GIT_BRANCH:
+        sh: git rev-parse --abbrev-ref HEAD
+    cmds:
+      - cmd: git checkout main
+      - cmd: git pull
+      - cmd: git checkout {{.GIT_BRANCH}}
+      - cmd: git merge main
