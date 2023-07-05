@@ -15,29 +15,48 @@ tasks:
     desc: Lists all commands
     cmds:
       - '{{.TASK_BINARY}} --list-all'
+
+  # base tasks
+  dev:
+    desc: Runs `pnpm desktop dev`
+    cmds:
+      - pnpm desktop dev
+  build:
+    desc: Runs `pnpm desktop build`
+    cmds:
+      - pnpm desktop build
+    
+  # clean base tasks
+  cdev:
+    desc: Cleans all output directories and runs `pnpm i, prep, desktop dev`
+    deps: [csetup, dev]
+  cbuild:
+    desc: Cleans all output directories and runs `pnpm i, prep, desktop build`
+    deps: [csetup, build]
+
+
+  # setup stuff
   setup:
-    desc: Runs `pnpm i` && `pnpm prep`
+    desc: Runs `pnpm i, prep`, and any additional setup scripts
     cmds:
       - pnpm i
       - pnpm prep
-  csetup:
-    desc: Cleans all output directories and runs `pnpm i` && `pnpm prep`
-    deps: [clean]
+      - task: setup-extras
+
+  setup-extras:
+    internal: true
     cmds:
-      - task: setup
-  cdev:
-    desc: Cleans all output directories and runs `pnpm i` && `pnpm prep` && `pnpm desktop dev`
-    deps: [csetup]
-    cmds:
-      - pnpm desktop dev
-  cbuild:
-    desc: Cleans all output directories and runs `pnpm i` && `pnpm prep` && `pnpm desktop build`
-    deps: [csetup]
-    cmds:
-      - pnpm desktop build
+      - cmd: .github/scripts/setup-system.sh
+        platforms: [darwin]
+      - cmd: rm -rf "$HOME/Library/Application\ Support/spacedrive/"
+        platforms: [darwin]
+      - cmd: .github/scripts/setup-system.ps1
+        platforms: [windows]
+
+
   clean:
     run: once
-    desc: Clean all output directories (on Windows, only the top `node_modules` is removed)
+    desc: Clean all output directories (on Windows, only the top `node_modules` is removed). This also runs any additional setup scripts.
     cmds:
       - cargo clean
       - cmd: find . -name "node_modules" -type d -prune -exec rm -rf "{}" \;
@@ -48,21 +67,13 @@ tasks:
         platforms: [windows]
       - task: setup-extras
     aliases: [c]
-  setup-extras:
-    internal: true
-    cmds:
-      - cmd: .github/scripts/setup-system.sh
-        platforms: [darwin]
-      - cmd: rm -rf "$HOME/Library/Application\ Support/spacedrive/"
-        platforms: [darwin]
-      - cmd: .github/scripts/setup-system.ps1
-        platforms: [windows]
-  merge-main:
-    vars:
-      GIT_BRANCH:
-        sh: git rev-parse --abbrev-ref HEAD
-    cmds:
-      - cmd: git checkout main
-      - cmd: git pull
-      - cmd: git checkout {{.GIT_BRANCH}}
-      - cmd: git merge main
+
+  # merge-main:
+  #   vars:
+  #     GIT_BRANCH:
+  #       sh: git rev-parse --abbrev-ref HEAD
+  #   cmds:
+  #     - cmd: git checkout main
+  #     - cmd: git pull
+  #     - cmd: git checkout {{.GIT_BRANCH}}
+  #     - cmd: git merge main
