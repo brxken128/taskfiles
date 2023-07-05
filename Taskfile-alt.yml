@@ -21,18 +21,23 @@ tasks:
     desc: Runs `pnpm desktop dev`
     cmds:
       - pnpm desktop dev
+    aliases: [d]  
   build:
     desc: Runs `pnpm desktop build`
     cmds:
       - pnpm desktop build
-    
+    aliases: [b]
+
   # clean base tasks
   cdev:
     desc: Cleans all output directories and runs `pnpm i, prep, desktop dev`
     deps: [csetup, dev]
+    aliases: [cd]
   cbuild:
     desc: Cleans all output directories and runs `pnpm i, prep, desktop build`
     deps: [csetup, build]
+    aliases: [cb]
+
 
 
   # setup stuff
