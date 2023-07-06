@@ -31,47 +31,60 @@ tasks:
   # clean base tasks
   cdev:
     desc: Cleans all output directories and runs `pnpm i, prep, desktop dev`
-    deps: [csetup, dev]
-    aliases: [cd]
+    # deps: [clean, setup, dev]
+    cmds: 
+      - task: clean
+      - task: setup
+      - task: dev
   cbuild:
     desc: Cleans all output directories and runs `pnpm i, prep, desktop build`
-    deps: [csetup, build]
-    aliases: [cb]
+    # deps: [clean, setup, build]
+    cmds:
+      - task: clean
+      - task: setup
+      - task: build
 
+  # clean
+  clean:
+    run: once
+    desc: Clean all output directories (on Windows, only the top `node_modules` is removed).
+    cmds:
+    - cargo clean
+    - cmd: find . -name "node_modules" -type d -prune -exec rm -rf "{}" \;
+      platforms: [darwin, linux]
+    - cmd: find . -name "dist" -type d -prune -exec rm -rf "{}/*" \;
+      platforms: [darwin, linux]
+    - cmd: rmdir /s /q node_modules
+      platforms: [windows]
+  aliases: [c]
+
+  clean-sd-dir:
+  cmds:
+    - cmd: rm -rf "$HOME/Library/Application\ Support/spacedrive/"
+      platforms: [darwin]
+    - cmd: rm -rf "$HOME/.local/share/spacedrive/"
+      platforms: [linux]
+    - cmd: rmdir /s /q "{{.USERPROFILE}}/AppData/Roaming/spacedrive/" #?????
+      platforms: [windows]
+      prompt: This is untested, are you sure you'd like to run?
 
 
   # setup stuff
   setup:
-    desc: Runs `pnpm i, prep`, and any additional setup scripts
+    desc: Runs pnpm i, prep, and any additional setup scripts
     cmds:
       - pnpm i
       - pnpm prep
       - task: setup-extras
+    aliases: [s]
 
   setup-extras:
     internal: true
     cmds:
       - cmd: .github/scripts/setup-system.sh
         platforms: [darwin]
-      - cmd: rm -rf "$HOME/Library/Application\ Support/spacedrive/"
-        platforms: [darwin]
       - cmd: .github/scripts/setup-system.ps1
         platforms: [windows]
-
-
-  clean:
-    run: once
-    desc: Clean all output directories (on Windows, only the top `node_modules` is removed). This also runs any additional setup scripts.
-    cmds:
-      - cargo clean
-      - cmd: find . -name "node_modules" -type d -prune -exec rm -rf "{}" \;
-        platforms: [darwin, linux]
-      - cmd: find . -name "dist" -type d -prune -exec rm -rf "{}/*" \;
-        platforms: [darwin, linux]
-      - cmd: rmdir /s /q node_modules
-        platforms: [windows]
-      - task: setup-extras
-    aliases: [c]
 
   # merge-main:
   #   vars:
