@@ -15,11 +15,11 @@ tasks:
         platforms: [amd64]
       - cmd: cargo install cross --git https://github.com/cross-rs/cross
         platforms: [amd64]
-      # cargo install cargo-nextest cargo-audit cargo-all-features cargo-watch
-      # `cargo-expand`, `cargo-llvm-lines`m `cargo-show-asm`
-      # install audit fix --features=fix?
-      # could use binstall?
-      # cargo-unused-features
+
+  install-cargo-tools-extra:
+    desc: Install extra (but very helpful) tools
+    cmds:
+      - cargo install cargo-llvm-lines cargo-expand cargo-show-asm cargo-unused-features
 
   build:
     cmds:
