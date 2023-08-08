@@ -74,7 +74,7 @@ tasks:
       - for: targets
         task: cross-test
         vars:
-          TARGET: "{{.ITEM}}"
+          TARGET: "{ { .ITEM } }"
 
   ci:
     deps: [clean]
@@ -88,14 +88,14 @@ tasks:
   # cleaning output dirs
   clean:
     run: once
-    desc: Clean all output directories (on Windows, only the top `node_modules` is removed).
+    desc: Clean all output directories (on Windows, only the top-level `node_modules` is removed).
     cmds:
       - cargo clean
-      - cmd: find . -name "node_modules" -type d -prune -exec rm -rf "{}" \;
+      - cmd: find ../../ -name "node_modules" -type d -prune -exec rm -rf "{}" \;
         platforms: [darwin, linux]
-      - cmd: find . -name "dist" -type d -prune -exec rm -rf "{}/*" \;
+      - cmd: find ../../ -name "dist" -type d -prune -exec rm -rf "{}/*" \;
         platforms: [darwin, linux]
-      - cmd: rmdir /s /q node_modules
+      - cmd: rmdir /s /q ..\..\node_modules
         platforms: [windows]
   aliases: [c]
 
