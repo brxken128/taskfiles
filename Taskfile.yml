@@ -16,7 +16,7 @@ tasks:
       - cmd: cargo install cross --git https://github.com/cross-rs/cross
         platforms: [amd64]
 
-  install-cargo-tools-extra:
+  install-cargo-tools-extras:
     desc: Install extra (but very helpful) tools
     cmds:
       - cargo install cargo-llvm-lines cargo-expand cargo-show-asm cargo-unused-features cargo-msrv cargo-generate
