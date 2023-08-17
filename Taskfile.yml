@@ -99,7 +99,7 @@ tasks:
         platforms: [windows]
   aliases: [c]
 
-  clean-sd-dir:
+  rm-sd-dir:
     cmds:
       - cmd: rm -rf "$HOME/Library/Application\ Support/spacedrive/"
         platforms: [darwin]
@@ -109,6 +109,12 @@ tasks:
         platforms: [windows]
         prompt: This is untested, are you sure you'd like to run?
     aliases: [rmsddir]
+
+  rm-dot-sd:
+    cmds:
+      - cmd: find $HOME -name ".spacedrive" -type f -prune -exec echo "Removing {}" \; -exec rm -rf "{}" \;
+        platforms: [darwin, linux]
+    aliases: [rmdotsd]
 
   # setup stuff
   setup:
