@@ -4,7 +4,7 @@ silent: true
 
 vars:
   TASK_BINARY: task # the name of the task executable (can sometimes be go-task)
-  # TEST_ARCHS: ["x86_64-unknown-linux-gnu", "i686-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "armv7-unknown-linux-gnueabi", "thumbv7neon-linux-androideabi", "x86_64-pc-windows-gnu"]
+  # TEST_ARCHS: ["x86_64-unknown-linux-gnu", "i686-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "armv7-unknown-linux-gnueabi", "x86_64-pc-windows-gnu"]
   # ^ waiting for task to support global variables properly
 
 tasks:
@@ -60,7 +60,7 @@ tasks:
       - cargo nextest run --release --all-features --run-ignored all
 
   cross-test:
-    description: Requires either docker or podman for `cross`
+    desc: Requires either docker or podman for `cross`
     platforms: [amd64]
     internal: true
     requires:
@@ -72,7 +72,14 @@ tasks:
     platforms: [amd64]
     internal: true
     cmds:
-      - for: ["x86_64-unknown-linux-gnu", "i686-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "armv7-unknown-linux-gnueabi", "thumbv7neon-linux-androideabi", "x86_64-pc-windows-gnu"]
+      - for:
+          [
+            "x86_64-unknown-linux-gnu",
+            "i686-unknown-linux-gnu",
+            "aarch64-unknown-linux-gnu",
+            "armv7-unknown-linux-gnueabi",
+            "x86_64-pc-windows-gnu",
+          ]
         task: cross-test
         vars:
           TARGET: "{{.ITEM}}"
@@ -108,7 +115,7 @@ tasks:
         platforms: [linux]
       - cmd: rmdir /s /q "{{.USERPROFILE}}/AppData/Roaming/spacedrive/" #?????
         platforms: [windows]
-        prompt: This is untested, are you sure you'd like to run?
+        # prompt: This is untested, are you sure you'd like to run?
     aliases: [rmsddir]
 
   rm-dot-sd:
