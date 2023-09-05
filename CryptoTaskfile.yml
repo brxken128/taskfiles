@@ -42,7 +42,7 @@ tasks:
     platforms: [amd64]
     desc: Run all tests for the current package with miri
     cmds:
-      - cargo +nightly miri nextest run -j8 --features blake3/no_sse2
+      - cargo +nightly miri nextest run -j12 --features blake3/no_sse2
 
   check-features:
     desc: Check every combination of features to ensure that they are all compatible, regardless of which are enabled
