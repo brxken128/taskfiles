@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 silent: true
 
@@ -14,14 +14,14 @@ tasks:
   default:
     desc: Lists all commands
     cmds:
-      - '{{.TASK_BINARY}} --list-all'
+      - "{{.TASK_BINARY}} --list-all"
 
   # base tasks
   dev:
     desc: Runs `pnpm desktop dev`
     cmds:
       - pnpm desktop dev
-    aliases: [d]  
+    aliases: [d]
   build:
     desc: Runs `pnpm desktop build`
     cmds:
@@ -31,14 +31,12 @@ tasks:
   # clean base tasks
   cdev:
     desc: Cleans all output directories and runs `pnpm i, prep, desktop dev`
-    # deps: [clean, setup, dev]
-    cmds: 
+    cmds:
       - task: clean
       - task: setup
       - task: dev
   cbuild:
     desc: Cleans all output directories and runs `pnpm i, prep, desktop build`
-    # deps: [clean, setup, build]
     cmds:
       - task: clean
       - task: setup
@@ -49,25 +47,24 @@ tasks:
     run: once
     desc: Clean all output directories (on Windows, only the top `node_modules` is removed).
     cmds:
-    - cargo clean
-    - cmd: find . -name "node_modules" -type d -prune -exec rm -rf "{}" \;
-      platforms: [darwin, linux]
-    - cmd: find . -name "dist" -type d -prune -exec rm -rf "{}/*" \;
-      platforms: [darwin, linux]
-    - cmd: rmdir /s /q node_modules
-      platforms: [windows]
-  aliases: [c]
+      - cargo clean
+      - cmd: find . -name "node_modules" -type d -prune -exec rm -rf "{}" \;
+        platforms: [darwin, linux]
+      - cmd: find . -name "dist" -type d -prune -exec rm -rf "{}/*" \;
+        platforms: [darwin, linux]
+      - cmd: rmdir /s /q node_modules
+        platforms: [windows]
+    aliases: [c]
 
   clean-sd-dir:
-  cmds:
-    - cmd: rm -rf "$HOME/Library/Application\ Support/spacedrive/"
-      platforms: [darwin]
-    - cmd: rm -rf "$HOME/.local/share/spacedrive/"
-      platforms: [linux]
-    - cmd: rmdir /s /q "{{.USERPROFILE}}/AppData/Roaming/spacedrive/" #?????
-      platforms: [windows]
-      prompt: This is untested, are you sure you'd like to run?
-
+    cmds:
+      - cmd: rm -rf "$HOME/Library/Application Support/spacedrive/"
+        platforms: [darwin]
+      - cmd: rm -rf "$HOME/.local/share/spacedrive/"
+        platforms: [linux]
+      - cmd: rmdir /s /q "{{.USERPROFILE}}/AppData/Roaming/spacedrive/" #?????
+        platforms: [windows]
+        # prompt: This is untested, are you sure you'd like to run?
 
   # setup stuff
   setup:
@@ -85,13 +82,3 @@ tasks:
         platforms: [darwin]
       - cmd: .github/scripts/setup-system.ps1
         platforms: [windows]
-
-  # merge-main:
-  #   vars:
-  #     GIT_BRANCH:
-  #       sh: git rev-parse --abbrev-ref HEAD
-  #   cmds:
-  #     - cmd: git checkout main
-  #     - cmd: git pull
-  #     - cmd: git checkout {{.GIT_BRANCH}}
-  #     - cmd: git merge main
