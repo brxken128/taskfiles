@@ -4,7 +4,7 @@ silent: true
 
 vars:
   TASK_BINARY: task # the name of the task executable (can sometimes be go-task)
-  # TEST_ARCHS: ["x86_64-unknown-linux-gnu", "i686-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "armv7-unknown-linux-gnueabi"]
+  # TEST_ARCHS: ["x86_64-unknown-linux-gnu", "i686-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "armv7-unknown-linux-gnueabi", "thumbv7neon-linux-androideabi", "x86_64-pc-windows-gnu"]
   # ^ waiting for task to support global variables properly
 
 tasks:
@@ -72,7 +72,7 @@ tasks:
     platforms: [amd64]
     internal: true
     cmds:
-      - for: ["x86_64-unknown-linux-gnu", "i686-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "armv7-unknown-linux-gnueabi"]
+      - for: ["x86_64-unknown-linux-gnu", "i686-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "armv7-unknown-linux-gnueabi", "thumbv7neon-linux-androideabi", "x86_64-pc-windows-gnu"]
         task: cross-test
         vars:
           TARGET: "{{.ITEM}}"
