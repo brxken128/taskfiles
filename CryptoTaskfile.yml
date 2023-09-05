@@ -101,7 +101,7 @@ tasks:
 
   rm-sd-dir:
     cmds:
-      - cmd: rm -rf "$HOME/Library/Application\ Support/spacedrive/"
+      - cmd: rm -rf "$HOME/Library/Application Support/spacedrive/"
         platforms: [darwin]
       - cmd: rm -rf "$HOME/.local/share/spacedrive/"
         platforms: [linux]
