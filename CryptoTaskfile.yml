@@ -4,7 +4,8 @@ silent: true
 
 vars:
   TASK_BINARY: task # the name of the task executable (can sometimes be go-task)
-  TEST_ARCHS: "x86_64-unknown-linux-gnu i686-unknown-linux-gnu aarch64-unknown-linux-gnu armv7-unknown-linux-gnueabi"
+  # TEST_ARCHS: ["x86_64-unknown-linux-gnu", "i686-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "armv7-unknown-linux-gnueabi"]
+  # ^ waiting for task to support global variables properly
 
 tasks:
   install-cargo-tools:
@@ -59,22 +60,22 @@ tasks:
       - cargo nextest run --release --all-features --run-ignored all
 
   cross-test:
+    description: Requires either docker or podman for `cross`
     platforms: [amd64]
     internal: true
     requires:
       vars: [TARGET]
     cmds:
-      - cross +nightly test --release --all-targets --all-features --target { { .TARGET } }
+      - cross +nightly test --release --all-targets --all-features --target {{.TARGET}}
 
   test-all-architectures:
     platforms: [amd64]
     internal: true
-    targets: { { TEST_ARCHS, split(' ') } }
     cmds:
-      - for: targets
+      - for: ["x86_64-unknown-linux-gnu", "i686-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "armv7-unknown-linux-gnueabi"]
         task: cross-test
         vars:
-          TARGET: "{ { .ITEM } }"
+          TARGET: "{{.ITEM}}"
 
   ci:
     deps: [clean]
@@ -111,8 +112,9 @@ tasks:
     aliases: [rmsddir]
 
   rm-dot-sd:
+    dir: "$HOME"
     cmds:
-      - cmd: find $HOME -name ".spacedrive" -type f -prune -exec echo "Removing {}" \; -exec rm -rf "{}" \;
+      - cmd: find . -name ".spacedrive" -type f -prune -exec echo "Removing {}" \; -exec rm -rf "{}" \;
         platforms: [darwin, linux]
     aliases: [rmdotsd]
 
