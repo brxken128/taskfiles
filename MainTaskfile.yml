@@ -20,12 +20,12 @@ tasks:
   dev:
     desc: Runs `pnpm desktop dev`
     cmds:
-      - pnpm desktop dev
+      - pnpm desktop dev --no-watch
     aliases: [d]
   build:
     desc: Runs `pnpm desktop build`
     cmds:
-      - pnpm desktop build
+      - pnpm desktop build --no-watch
     aliases: [b]
 
   # clean base tasks
