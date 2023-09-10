@@ -12,6 +12,8 @@ tasks:
     desc: Install all of the cargo prerequisites
     cmds:
       - cargo install cargo-nextest cargo-audit cargo-hack cargo-watch
+      - cmd: rustup +nightly
+        platforms: [amd64]
       - cmd: rustup +nightly component add miri rust-analyzer
         platforms: [amd64]
       - cmd: cargo install cross --git https://github.com/cross-rs/cross
