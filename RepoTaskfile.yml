@@ -9,7 +9,10 @@ silent: true
 
 vars:
   TASK_BINARY: task # the name of the task executable
-  TASKFILE_REMOTE_NAME: "RepoTaskfile.yml"
+  REMOTE_TASKFILE_NAME: "RepoTaskfile.yml"
+  REMOTE_TASKFILE_REPO: "brxken128/taskfiles"
+  REMOTE_TASKFILE_BRANCH: "main"
+  REMOTE_TASKFILE_URL: "https://$GAT@raw.githubusercontent.com/{{.REMOTE_TASKFILE_REPO}}/{{.REMOTE_TASKFILE_BRANCH}}/{{.REMOTE_TASKFILE_NAME}}"
 
 tasks:
   default:
@@ -96,6 +99,5 @@ tasks:
 
   update:
     desc: Updates and overrides the current Taskfile from Github with the latest version
-    dotenv: [".env"]
     cmds:
       - curl -o Taskfile.yml $TASKFILE_URL

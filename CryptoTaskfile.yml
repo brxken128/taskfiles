@@ -6,7 +6,10 @@ vars:
   TASK_BINARY: task # the name of the task executable (can sometimes be go-task)
   # TEST_ARCHS: ["x86_64-unknown-linux-gnu", "i686-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "armv7-unknown-linux-gnueabi", "x86_64-pc-windows-gnu"]
   # ^ waiting for task to support global variables properly
-  TASKFILE_REMOTE_NAME: "CryptoTaskfile.yml"
+  REMOTE_TASKFILE_NAME: "CryptoTaskfile.yml"
+  REMOTE_TASKFILE_REPO: "brxken128/taskfiles"
+  REMOTE_TASKFILE_BRANCH: "main"
+  REMOTE_TASKFILE_URL: "https://$GAT@raw.githubusercontent.com/{{.REMOTE_TASKFILE_REPO}}/{{.REMOTE_TASKFILE_BRANCH}}/{{.REMOTE_TASKFILE_NAME}}"
 
 tasks:
   default:
@@ -152,6 +155,5 @@ tasks:
 
   update:
     desc: Updates and overrides the current Taskfile from Github
-    dotenv: [".env"]
     cmds:
-      - curl -o Taskfile.yml $TASKFILE_URL
+      - curl -o Taskfile.yml $REMOTE_TASKFILE_URL
