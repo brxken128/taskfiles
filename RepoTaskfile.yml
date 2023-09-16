@@ -61,7 +61,8 @@ tasks:
         platforms: [windows]
     aliases: [c]
 
-  clean-sd-dir:
+  rm-sd-dir:
+    desc: This removes the Spacedrive data directory
     cmds:
       - cmd: rm -rf "$HOME/Library/Application Support/spacedrive/"
         platforms: [darwin]
@@ -70,14 +71,23 @@ tasks:
       - cmd: rmdir /s /q "{{.USERPROFILE}}/AppData/Roaming/spacedrive/" #?????
         platforms: [windows]
         # prompt: This is untested, are you sure you'd like to run?
+    aliases: [rmsddir]
+
+  rm-dot-sd:
+    desc: This removes all `.spacedrive` files from your `$HOME` directory
+    dir: "$HOME"
+    cmds:
+      - cmd: find . -name ".spacedrive" -type f -prune -exec echo "Removing {}" \; -exec rm -rf "{}" \;
+        platforms: [darwin, linux]
+    aliases: [rmdotsd]
 
   # setup stuff
   setup:
     desc: Runs pnpm i, prep, and any additional setup scripts
     cmds:
+      - task: setup-extras
       - pnpm i
       - pnpm prep
-      - task: setup-extras
     aliases: [s]
 
   setup-extras:

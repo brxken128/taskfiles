@@ -118,30 +118,12 @@ tasks:
         platforms: [windows]
   aliases: [c]
 
-  rm-sd-dir:
-    cmds:
-      - cmd: rm -rf "$HOME/Library/Application Support/spacedrive/"
-        platforms: [darwin]
-      - cmd: rm -rf "$HOME/.local/share/spacedrive/"
-        platforms: [linux]
-      - cmd: rmdir /s /q "{{.USERPROFILE}}/AppData/Roaming/spacedrive/" #?????
-        platforms: [windows]
-        # prompt: This is untested, are you sure you'd like to run?
-    aliases: [rmsddir]
-
-  rm-dot-sd:
-    dir: "$HOME"
-    cmds:
-      - cmd: find . -name ".spacedrive" -type f -prune -exec echo "Removing {}" \; -exec rm -rf "{}" \;
-        platforms: [darwin, linux]
-    aliases: [rmdotsd]
-
   # setup stuff
   setup:
     desc: Runs pnpm i, prep, and any additional setup scripts
     cmds:
-      - pnpm i
       - task: setup-extras
+      - pnpm i
       - pnpm prep
     aliases: [s]
 
