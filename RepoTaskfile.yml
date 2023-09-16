@@ -9,6 +9,7 @@ silent: true
 
 vars:
   TASK_BINARY: task # the name of the task executable
+  TEMPLATE_URL: "https://github.com/brxken128/template"
   REMOTE_TASKFILE_NAME: "RepoTaskfile.yml"
   REMOTE_TASKFILE_REPO: "brxken128/taskfiles"
   REMOTE_TASKFILE_BRANCH: "main"
@@ -94,10 +95,11 @@ tasks:
   #       platforms: [darwin, linux]
 
   new-crate:
+    desc: Create a new crate with hardened clippy lints
     cmds:
-      - cmd: cargo generate --git https://github.com/brxken128/template
+      - cmd: cargo generate --git {{.TEMPLATE_URL}}
 
   update:
     desc: Updates and overrides the current Taskfile from Github with the latest version
     cmds:
-      - curl -o Taskfile.yml $TASKFILE_URL
+      - curl -o Taskfile.yml {{.REMOTE_TASKFILE_URL}}
