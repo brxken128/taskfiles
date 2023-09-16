@@ -9,6 +9,7 @@ silent: true
 
 vars:
   TASK_BINARY: task # the name of the task executable
+  TASKFILE_REMOTE_NAME: "RepoTaskfile.yml"
 
 tasks:
   default:
@@ -82,3 +83,19 @@ tasks:
         platforms: [darwin]
       - cmd: .github/scripts/setup-system.ps1
         platforms: [windows]
+
+  # get-main-repo-name:
+  #   internal: true
+  #   cmds:
+  #     - cmd: "git remote show origin | sed -n '/HEAD branch/s/.*: //p'"
+  #       platforms: [darwin, linux]
+
+  new-crate:
+    cmds:
+      - cmd: cargo generate --git https://github.com/brxken128/template
+
+  update:
+    desc: Updates and overrides the current Taskfile from Github with the latest version
+    dotenv: [".env"]
+    cmds:
+      - curl -o Taskfile.yml $TASKFILE_URL

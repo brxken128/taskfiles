@@ -6,8 +6,14 @@ vars:
   TASK_BINARY: task # the name of the task executable (can sometimes be go-task)
   # TEST_ARCHS: ["x86_64-unknown-linux-gnu", "i686-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "armv7-unknown-linux-gnueabi", "x86_64-pc-windows-gnu"]
   # ^ waiting for task to support global variables properly
+  TASKFILE_REMOTE_NAME: "CryptoTaskfile.yml"
 
 tasks:
+  default:
+    desc: Lists all commands
+    cmds:
+      - "{{.TASK_BINARY}} --list-all"
+
   install-cargo-tools:
     desc: Install all of the cargo prerequisites
     cmds:
@@ -132,8 +138,8 @@ tasks:
     desc: Runs pnpm i, prep, and any additional setup scripts
     cmds:
       - pnpm i
-      - pnpm prep
       - task: setup-extras
+      - pnpm prep
     aliases: [s]
 
   setup-extras:
@@ -143,3 +149,9 @@ tasks:
         platforms: [darwin]
       - cmd: ../../github/scripts/setup-system.ps1
         platforms: [windows]
+
+  update:
+    desc: Updates and overrides the current Taskfile from Github
+    dotenv: [".env"]
+    cmds:
+      - curl -o Taskfile.yml $TASKFILE_URL
