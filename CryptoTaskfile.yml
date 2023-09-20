@@ -4,6 +4,7 @@ silent: true
 
 vars:
   TASK_BINARY: task # the name of the task executable (can sometimes be go-task)
+  RELATIVE_REPO_ROOT: {{fromSlash "../../"}}
   # TEST_ARCHS: ["x86_64-unknown-linux-gnu", "i686-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "armv7-unknown-linux-gnueabi", "x86_64-pc-windows-gnu"]
   # ^ waiting for task to support global variables properly
   REMOTE_TASKFILE_NAME: "CryptoTaskfile.yml"
@@ -108,13 +109,14 @@ tasks:
   clean:
     run: once
     desc: Clean all output directories (on Windows, only the top-level `node_modules` is removed).
+    dir: {{.RELATIVE_REPO_ROOT}}
     cmds:
       - cargo clean
-      - cmd: find ../../ -name "node_modules" -type d -prune -exec rm -rf "{}" \;
+      - cmd: find . -name "node_modules" -type d -prune -exec rm -rf "{}" \;
         platforms: [darwin, linux]
-      - cmd: find ../../ -name "dist" -type d -prune -exec rm -rf "{}/*" \;
+      - cmd: find . -name "dist" -type d -prune -exec rm -rf "{}/*" \;
         platforms: [darwin, linux]
-      - cmd: rmdir /s /q ..\..\node_modules
+      - cmd: rmdir /s /q node_modules" # i have no clue if this will work
         platforms: [windows]
   aliases: [c]
 
@@ -129,6 +131,7 @@ tasks:
 
   setup-extras:
     internal: true
+    dir: {{.RELATIVE_REPO_ROOT}}
     cmds:
       - cmd: ../../.github/scripts/setup-system.sh
         platforms: [darwin]
