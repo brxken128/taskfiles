@@ -4,7 +4,8 @@ silent: true
 
 vars:
   TASK_BINARY: task # the name of the task executable (can sometimes be go-task)
-  RELATIVE_REPO_ROOT: {{fromSlash "../../"}}
+  # RELATIVE_REPO_ROOT: '{{fromSlash "../../"}}'
+  # ^ ideally we'd be able to use git to get this and pass it to each
   # TEST_ARCHS: ["x86_64-unknown-linux-gnu", "i686-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "armv7-unknown-linux-gnueabi", "x86_64-pc-windows-gnu"]
   # ^ waiting for task to support global variables properly
   REMOTE_TASKFILE_NAME: "CryptoTaskfile.yml"
@@ -62,12 +63,12 @@ tasks:
       - cargo hack check --feature-powerset
 
   test:
-    desc: Run tests with all features on the current host
+    desc: Run tests
     cmds:
       - cargo nextest run --release --all-features
 
   test-all:
-    desc: Run tests
+    desc: Run all tests (including ignored) with all features
     cmds:
       - cargo nextest run --release --all-features --run-ignored all
 
@@ -109,16 +110,18 @@ tasks:
   clean:
     run: once
     desc: Clean all output directories (on Windows, only the top-level `node_modules` is removed).
-    dir: {{.RELATIVE_REPO_ROOT}}
+    vars:
+      ROOT:
+        sh: "git rev-parse --show-toplevel"
     cmds:
       - cargo clean
-      - cmd: find . -name "node_modules" -type d -prune -exec rm -rf "{}" \;
+      - cmd: find "{{.ROOT}}" -name "node_modules" -type d -prune -exec rm -rf "{}" \;
         platforms: [darwin, linux]
-      - cmd: find . -name "dist" -type d -prune -exec rm -rf "{}/*" \;
+      - cmd: find "{{.ROOT}}" -name "dist" -type d -prune -exec rm -rf "{}/*" \;
         platforms: [darwin, linux]
-      - cmd: rmdir /s /q node_modules" # i have no clue if this will work
+      - cmd: rmdir /s /q {{.ROOT}/node_modules" # i have no clue if this will work
         platforms: [windows]
-  aliases: [c]
+    aliases: [c]
 
   # setup stuff
   setup:
@@ -131,14 +134,16 @@ tasks:
 
   setup-extras:
     internal: true
-    dir: {{.RELATIVE_REPO_ROOT}}
+    vars:
+      ROOT:
+        sh: "git rev-parse --show-toplevel"
     cmds:
-      - cmd: ../../.github/scripts/setup-system.sh
+      - cmd: "{{.ROOT}}/.github/scripts/setup-system.sh"
         platforms: [darwin]
-      - cmd: ../../github/scripts/setup-system.ps1
+      - cmd: "{{.ROOT}}/.github/scripts/setup-system.ps1"
         platforms: [windows]
 
   update:
     desc: Updates and overrides the current Taskfile from Github
     cmds:
-      - curl -o Taskfile.yml {{.REMOTE_TASKFILE_URL}}
+      - curl -o Taskfile.yml "{{.REMOTE_TASKFILE_URL}}"
