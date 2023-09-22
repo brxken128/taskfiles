@@ -113,9 +113,9 @@ tasks:
   new-crate:
     desc: Create a new crate with hardened clippy lints
     cmds:
-      - cmd: cargo generate --git {{.TEMPLATE_URL}}
+      - cmd: cargo generate --git "{{.TEMPLATE_URL}}"
 
   update:
     desc: Updates and overrides the current Taskfile from Github with the latest version
     cmds:
-      - curl -o Taskfile.yml {{.REMOTE_TASKFILE_URL}}
+      - curl -o Taskfile.yml "{{.REMOTE_TASKFILE_URL}}"
