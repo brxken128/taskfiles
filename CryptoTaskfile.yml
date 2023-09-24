@@ -12,12 +12,13 @@ vars:
   REMOTE_TASKFILE_REPO: "brxken128/taskfiles"
   REMOTE_TASKFILE_BRANCH: "main"
   REMOTE_TASKFILE_URL: "https://$GAT@raw.githubusercontent.com/{{.REMOTE_TASKFILE_REPO}}/{{.REMOTE_TASKFILE_BRANCH}}/{{.REMOTE_TASKFILE_NAME}}"
+  REPO_ROOT:
+    sh: "git rev-parse --show-toplevel"
 
 tasks:
   default:
     desc: Lists all commands
-    cmds:
-      - "{{.TASK_BINARY}} --list-all"
+    cmd: "{{.TASK_BINARY}} --list-all"
 
   install-cargo-tools:
     desc: Install all of the cargo prerequisites
@@ -42,6 +43,7 @@ tasks:
     cmds:
       - cargo doc --release --all-features --document-private-items --open
   audit:
+    dir: "{{.REPO_ROOT}}"
     cmds:
       - cargo audit
 
@@ -109,39 +111,42 @@ tasks:
   # cleaning output dirs
   clean:
     run: once
-    desc: Clean all output directories (on Windows, only the top-level `node_modules` is removed).
-    vars:
-      ROOT:
-        sh: "git rev-parse --show-toplevel"
+    dir: "{{.REPO_ROOT}}"
+    desc: Clean all output directories (on Windows, only the top `node_modules` is removed).
     cmds:
-      - cargo clean
-      - cmd: find "{{.ROOT}}" -name "node_modules" -type d -prune -exec rm -rf "{}" \;
+      # unix
+      - cmd: rm -rf target/ && echo "Removing ./target" # manually delete as sometimes `cargo clean` fails
         platforms: [darwin, linux]
-      - cmd: find "{{.ROOT}}" -name "dist" -type d -prune -exec rm -rf "{}/*" \;
+      - cmd: find . -name "node_modules" -type d -prune -exec echo "Removing {}" \; -exec rm -rf "{}" \;
         platforms: [darwin, linux]
-      - cmd: rmdir /s /q {{.ROOT}/node_modules" # i have no clue if this will work
+      - cmd: find . -name "dist" -type d -prune -exec echo "Removing {}" \; -exec rm -rf "{}/*" \;
+        platforms: [darwin, linux]
+
+      # windows
+      - cmd: rmdir /s /q "target" # manually delete as sometimes `cargo clean` fails
+        platforms: [windows]
+      - cmd: rmdir /s /q "node_modules" # i have no clue if this will work
         platforms: [windows]
     aliases: [c]
 
-  # setup stuff
-  setup:
-    desc: Runs pnpm i, prep, and any additional setup scripts
-    cmds:
-      - task: setup-extras
-      - pnpm i
-      - pnpm prep
-    aliases: [s]
+  # # setup stuff
+  # setup:
+  #   desc: Runs pnpm i, prep, and any additional setup scripts
+  #   dir: "{{.REPO_ROOT}}"
+  #   cmds:
+  #     - task: setup-extras
+  #     - pnpm i
+  #     - pnpm prep
+  #   aliases: [s]
 
-  setup-extras:
-    internal: true
-    vars:
-      ROOT:
-        sh: "git rev-parse --show-toplevel"
-    cmds:
-      - cmd: "{{.ROOT}}/.github/scripts/setup-system.sh"
-        platforms: [darwin]
-      - cmd: "{{.ROOT}}/.github/scripts/setup-system.ps1"
-        platforms: [windows]
+  # setup-extras:
+  #   internal: true
+  #   dir: "{{.REPO_ROOT}}"
+  #   cmds:
+  #     - cmd: .github/scripts/setup-system.sh
+  #       platforms: [darwin]
+  #     - cmd: .github/scripts/setup-system.ps1
+  #       platforms: [windows]
 
   update:
     desc: Updates and overrides the current Taskfile from Github
