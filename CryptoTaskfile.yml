@@ -153,5 +153,5 @@ tasks:
     desc: Updates and overrides the current Taskfile from Github
     cmds:
       - "echo \"Pre-update hash: \" && b3sum --no-names Taskfile.yml"
-      - curl -s -o Taskfile.yml "{{.REMOTE_TASKFILE_URL}}"
+      - "curl --silent --output Taskfile.yml {{.REMOTE_TASKFILE_URL}}"
       - "echo \"Post-update hash: \" && b3sum --no-names Taskfile.yml"
