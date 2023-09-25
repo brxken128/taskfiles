@@ -23,7 +23,7 @@ tasks:
   install-cargo-tools:
     desc: Install all of the cargo prerequisites
     cmds:
-      - cargo install cargo-nextest cargo-audit cargo-hack cargo-watch
+      - cargo install cargo-nextest cargo-audit cargo-hack cargo-watch b3sum
       - cmd: rustup +nightly
         platforms: [amd64]
       - cmd: rustup +nightly component add miri rust-analyzer
@@ -152,6 +152,6 @@ tasks:
   update:
     desc: Updates and overrides the current Taskfile from Github
     cmds:
-      - "{{.HASH_CMD}} Taskfile.yml"
+      - "echo \"Pre-update hash: \" && b3sum Taskfile.yml"
       - curl -s -o Taskfile.yml "{{.REMOTE_TASKFILE_URL}}"
-      - "{{.HASH_CMD}} Taskfile.yml"
+      - "echo \"Post-update hash: \" && b3sum Taskfile.yml"
