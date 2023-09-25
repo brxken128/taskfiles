@@ -115,6 +115,8 @@ tasks:
       - cmd: cargo generate --git "{{.TEMPLATE_URL}}"
 
   update:
-    desc: Updates and overrides the current Taskfile from Github with the latest version
+    desc: Updates and overrides the current Taskfile from Github
     cmds:
-      - curl -o Taskfile.yml "{{.REMOTE_TASKFILE_URL}}"
+      - "echo \"Pre-update hash: \" && b3sum --no-names Taskfile.yml"
+      - curl -s -o Taskfile.yml "{{.REMOTE_TASKFILE_URL}}"
+      - "echo \"Post-update hash: \" && b3sum --no-names Taskfile.yml"
