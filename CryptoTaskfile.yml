@@ -34,7 +34,7 @@ tasks:
   install-cargo-tools-extras:
     desc: Install extra (but very helpful) tools
     cmds:
-      - cargo install cargo-llvm-lines cargo-expand cargo-show-asm cargo-unused-features cargo-msrv cargo-generate cargo-criterion zellij fd
+      - cargo install cargo-llvm-lines cargo-expand cargo-show-asm cargo-unused-features cargo-msrv cargo-generate cargo-criterion zellij fd-find
 
   build:
     cmds:
