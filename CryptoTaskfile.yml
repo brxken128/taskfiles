@@ -152,4 +152,6 @@ tasks:
   update:
     desc: Updates and overrides the current Taskfile from Github
     cmds:
-      - curl -o Taskfile.yml "{{.REMOTE_TASKFILE_URL}}"
+      - "{{.HASH_CMD}} Taskfile.yml"
+      - curl -o -s Taskfile.yml "{{.REMOTE_TASKFILE_URL}}"
+      - "{{.HASH_CMD}} Taskfile.yml"
