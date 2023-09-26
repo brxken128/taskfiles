@@ -52,7 +52,7 @@ tasks:
     desc: Clean all output directories (on Windows, only the top `node_modules` is removed).
     cmds:
       # unix
-      - cmd: rm -rf target/ && echo "Removing ./target" # manually delete as sometimes `cargo clean` fails
+      - cmd: rm -rf target && echo "Removing ./target" # manually delete as sometimes `cargo clean` fails
         platforms: [darwin, linux]
       - cmd: find . -name "node_modules" -type d -prune -exec echo "Removing {}" \; -exec rm -rf "{}" \;
         platforms: [darwin, linux]
@@ -69,11 +69,11 @@ tasks:
   rm-sd-dir:
     desc: This removes the Spacedrive data directory
     cmds:
-      - cmd: rm -rf "$HOME/Library/Application Support/spacedrive/"
+      - cmd: rm -rf "$HOME/Library/Application Support/spacedrive"
         platforms: [darwin]
-      - cmd: rm -rf "$HOME/.local/share/spacedrive/"
+      - cmd: rm -rf "$HOME/.local/share/spacedrive"
         platforms: [linux]
-      - cmd: rmdir /s /q "{{.USERPROFILE}}/AppData/Roaming/spacedrive/" #?????
+      - cmd: rmdir /s /q "{{.USERPROFILE}}/AppData/Roaming/spacedrive" #?????
         platforms: [windows]
         # prompt: This is untested, are you sure you'd like to run?
     aliases: [rmsddir]
