@@ -130,25 +130,6 @@ tasks:
         platforms: [windows]
     aliases: [c]
 
-  # # setup stuff
-  # setup:
-  #   desc: Runs pnpm i, prep, and any additional setup scripts
-  #   dir: "{{.REPO_ROOT}}"
-  #   cmds:
-  #     - task: setup-extras
-  #     - pnpm i
-  #     - pnpm prep
-  #   aliases: [s]
-
-  # setup-extras:
-  #   internal: true
-  #   dir: "{{.REPO_ROOT}}"
-  #   cmds:
-  #     - cmd: .github/scripts/setup-system.sh
-  #       platforms: [darwin]
-  #     - cmd: .github/scripts/setup-system.ps1
-  #       platforms: [windows]
-
   update:
     desc: Updates and overrides the current Taskfile from Github
     cmds:
