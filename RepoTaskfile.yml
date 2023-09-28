@@ -88,20 +88,11 @@ tasks:
 
   # setup stuff
   setup:
-    desc: Runs pnpm i, prep, and any additional setup scripts
+    desc: Runs pnpm i and prep
     cmds:
-      - task: setup-extras
       - pnpm i
       - pnpm prep
     aliases: [s]
-
-  setup-extras:
-    internal: true
-    cmds:
-      - cmd: .github/scripts/setup-system.sh
-        platforms: [darwin]
-      - cmd: .github/scripts/setup-system.ps1
-        platforms: [windows]
 
   # get-main-repo-name:
   #   internal: true
