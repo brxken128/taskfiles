@@ -22,9 +22,9 @@ tasks:
 
   # base tasks
   dev:
-    desc: Runs `pnpm desktop dev`
+    desc: Runs `pnpm tauri dev`
     cmds:
-      - pnpm desktop dev --no-watch
+      - pnpm tauri dev --no-watch
     aliases: [d]
   build:
     desc: Runs `pnpm desktop build`
