@@ -9,11 +9,9 @@ silent: true
 
 vars:
   TASK_BINARY: task # the name of the task executable
-  TEMPLATE_URL: "https://github.com/brxken128/template"
-  TEMPLATE_EXT: "/tree/main"
+  PRIMARY_BRANCH: "main"
+  TEMPLATE_URL: "github:brxken128/template"
   REMOTE_TASKFILE_NAME: "RepoTaskfile.yml"
-  REMOTE_TASKFILE_REPO: "brxken128/taskfiles"
-  REMOTE_TASKFILE_BRANCH: "main"
   REMOTE_TASKFILE_URL: "https://$GAT@raw.githubusercontent.com/{{.REMOTE_TASKFILE_REPO}}/{{.REMOTE_TASKFILE_BRANCH}}/{{.REMOTE_TASKFILE_NAME}}"
 
 tasks:
@@ -104,12 +102,12 @@ tasks:
   new-lib:
     desc: Create a new crate with hardened clippy lints
     cmds:
-      - cmd: cargo generate --git "{{.TEMPLATE_URL}}{{.EXT}}/bin"
+      - cmd: cargo generate --git "{{.TEMPLATE_URL}" lib
 
   new-bin:
     desc: Create a new binary with hardened clippy lints
     cmds:
-      - cmd: cargo generate --git "{{.TEMPLATE_URL}}{{.EXT}}/bin"
+      - cmd: cargo generate --git "{{.TEMPLATE_URL}}" bin
 
   update:
     desc: Updates and overrides the current Taskfile from Github
