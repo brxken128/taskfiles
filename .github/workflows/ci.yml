@@ -5,6 +5,7 @@ permissions: read-all
 on:
   pull_request: {}
   merge_group: {}
+  workflow_dispatch: {}
 
 # Cancel previous runs of the same workflow on the same branch.
 concurrency:
