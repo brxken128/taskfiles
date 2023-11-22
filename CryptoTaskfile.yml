@@ -8,10 +8,8 @@ vars:
   # ^ ideally we'd be able to use git to get this and pass it to each
   # TEST_ARCHS: ["x86_64-unknown-linux-gnu", "i686-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "armv7-unknown-linux-gnueabi", "x86_64-pc-windows-gnu"]
   # ^ waiting for task to support global variables properly
-  REMOTE_TASKFILE_NAME: "CryptoTaskfile.yml"
-  REMOTE_TASKFILE_REPO: "brxken128/taskfiles"
-  REMOTE_TASKFILE_BRANCH: "main"
-  REMOTE_TASKFILE_URL: "https://$GAT@raw.githubusercontent.com/{{.REMOTE_TASKFILE_REPO}}/{{.REMOTE_TASKFILE_BRANCH}}/{{.REMOTE_TASKFILE_NAME}}"
+  REMOTE_TASKFILE_NAME: CryptoTaskfile.yml
+  REMOTE_TASKFILE_URL: "https://raw.githubusercontent.com/brxken128/taskfiles/main/{{.REMOTE_TASKFILE_NAME}}"
   REPO_ROOT:
     sh: "git rev-parse --show-toplevel"
 
@@ -34,8 +32,7 @@ tasks:
   install-cargo-tools-extras:
     desc: Install extra (but very helpful) tools
     cmds:
-      - cargo install cargo-llvm-lines cargo-expand cargo-show-asm cargo-unused-features cargo-msrv cargo-generate cargo-criterion zellij hyperfine
-      # fd-find
+      - cargo install cargo-llvm-lines cargo-expand cargo-show-asm cargo-unused-features cargo-msrv cargo-generate cargo-criterion zellij hyperfine fd-find
 
   build:
     cmds:
@@ -52,7 +49,7 @@ tasks:
   watch:
     desc: Watch the current package for code changes and run tests on every change
     cmds:
-      - cargo watch -cx 'nextest run --release'
+      - cargo watch -cx 'nextest run --release --no-fail-fast'
 
   miri:
     platforms: [amd64]
@@ -109,30 +106,25 @@ tasks:
       - task: miri
       - task: test-all
 
+  internal-clean:
+    internal: true
+    cmds:
+      - cmd: fd -gIH --exclude ".git" --exclude ".github" --prune "{{.NAME}}" . -x rm -rf "{{.RM}}" \; -x echo "Removing {{.RM}}" \;
+        platforms: [darwin, linux]
+
   # cleaning output dirs
   clean:
-    run: once
-    dir: "{{.REPO_ROOT}}"
     desc: Clean all output directories (on Windows, only the top `node_modules` is removed).
     cmds:
       # unix
-      - cmd: rm -rf target && echo "Removing ./target" # manually delete as sometimes `cargo clean` fails
-        platforms: [darwin, linux]
-      - cmd: find . -name "node_modules" -type d -prune -exec echo "Removing {}" \; -exec rm -rf "{}" \;
-        platforms: [darwin, linux]
-      - cmd: find . -name "dist" -type d -prune -exec echo "Removing {}" \; -exec rm -rf "{}/*" \;
-        platforms: [darwin, linux]
+      - cmd: until cargo clean; do; done
+        platforms: [darwin, linux, windows]
 
-      # windows
-      - cmd: rmdir /s /q "target" # manually delete as sometimes `cargo clean` fails
-        platforms: [windows]
-      - cmd: rmdir /s /q "node_modules" # i have no clue if this will work
-        platforms: [windows]
     aliases: [c]
 
   update:
     desc: Updates and overrides the current Taskfile from Github
     cmds:
-      - "echo \"Pre-update hash: \" && b3sum --no-names Taskfile.yml"
-      - "curl --silent --output Taskfile.yml {{.REMOTE_TASKFILE_URL}}"
-      - "echo \"Post-update hash: \" && b3sum --no-names Taskfile.yml"
+      - 'echo "Pre-update hash: " && b3sum --no-names Taskfile.yml'
+      - curl -s -o Taskfile.yml "{{.REMOTE_TASKFILE_URL}}"
+      - 'echo "Post-update hash: " && b3sum --no-names Taskfile.yml'
