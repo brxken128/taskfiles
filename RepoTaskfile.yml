@@ -10,9 +10,8 @@ silent: true
 vars:
   TASK_BINARY: task # the name of the task executable
   TEMPLATE_URL: github:brxken128/template
-  REMOTE_TASKFILE_REPO: brxken128/taskfiles
   REMOTE_TASKFILE_NAME: RepoTaskfile.yml
-  REMOTE_TASKFILE_URL: "https://raw.githubusercontent.com/brxken128/main/{{.REMOTE_TASKFILE_NAME}}"
+  REMOTE_TASKFILE_URL: "https://raw.githubusercontent.com/brxken128/taskfiles/main/{{.REMOTE_TASKFILE_NAME}}"
 
 tasks:
   default:
