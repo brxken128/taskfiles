@@ -8,20 +8,20 @@ silent: true
 #     dir: crates/crypto
 
 vars:
-  TASK_BINARY: task
-  GITHUG_URL: github:brxken128
-  PRIMARY_BRANCH: "main"
-  TASKFILE_REPO: taskfiles
-  TEMPLATES_REPO: "template"
-  TASKFILE_ALIAS: "RepoTaskfile.yml"
-  CRATE_TEMPLATE: crate-template
-  BINARY_TEMPLATE: binary-template
-  REMOTE_TASKFILE_URL: "https://$GAT@raw.githubusercontent.com/{{.TASKFILE_REPO}}/{{.PRIMARY_BRANCH}}/{{.TASKFILE_ALIAS}}"
+  TASK_BINARY: task # the name of the task executable
+  TEMPLATE_URL: github:brxken128/template
+  REMOTE_TASKFILE_REPO: brxken128/taskfiles
+  REMOTE_TASKFILE_NAME: RepoTaskfile.yml
+  REMOTE_TASKFILE_URL: "https://raw.githubusercontent.com/brxken128/main/{{.REMOTE_TASKFILE_NAME}}"
 
 tasks:
   default:
     desc: Lists all commands
     cmd: "{{.TASK_BINARY}} --list-all"
+
+  script-setup:
+    desc: "Required to run the script: Installs `fd` (very fast `find` alternative)"
+    cmd: cargo install fd-find
 
   # base tasks
   dev:
@@ -29,10 +29,11 @@ tasks:
     cmds:
       - pnpm tauri dev --no-watch
     aliases: [d]
+
   build:
-    desc: Runs `pnpm desktop build`
+    desc: Runs `pnpm tauri build`
     cmds:
-      - pnpm desktop build --no-watch
+      - pnpm tauri build
     aliases: [b]
 
   # clean base tasks
@@ -42,6 +43,7 @@ tasks:
       - task: clean
       - task: setup
       - task: dev
+
   cbuild:
     desc: Cleans all output directories and runs `pnpm i, prep, desktop build`
     cmds:
@@ -49,25 +51,51 @@ tasks:
       - task: setup
       - task: build
 
+  internal-clean:
+    internal: true
+    cmds:
+      - cmd: fd -gIH --exclude ".git" --exclude ".github" --prune "{{.NAME}}" . -x rm -rf "{{.RM}}" \; -x echo "Removing {{.RM}}" \;
+        platforms: [darwin, linux]
+
   # cleaning output dirs
   clean:
-    run: once
     desc: Clean all output directories (on Windows, only the top `node_modules` is removed).
     cmds:
       # unix
-      - cmd: rm -rf target && echo "Removing ./target" # manually delete as sometimes `cargo clean` fails
+      - cmd: until cargo clean; do; done
         platforms: [darwin, linux]
-      - cmd: find . -name "node_modules" -type d -prune -exec echo "Removing {}" \; -exec rm -rf "{}" \;
-        platforms: [darwin, linux]
-      - cmd: find . -name "dist" -type d -prune -exec echo "Removing {}" \; -exec rm -rf "{}/*" \;
-        platforms: [darwin, linux]
+      - task: internal-clean
+        vars:
+          NAME: node_modules
+          RM: "{}"
 
       # windows
-      - cmd: rmdir /s /q "target" # manually delete as sometimes `cargo clean` fails
+      - cmd: del /s /q "target" # manually delete as sometimes `cargo clean` fails
         platforms: [windows]
-      - cmd: rmdir /s /q "node_modules" # i have no clue if this will work
+      - cmd: del /s /q "node_modules" # i have no clue if this will work
         platforms: [windows]
     aliases: [c]
+
+  clean-all:
+    desc: Clean all output directories (on Windows, only the top `node_modules` is removed).
+    cmds:
+      - cmd: until cargo clean; do; done
+        platforms: [darwin, linux, windows] # should work on windows due to bash interpretation
+
+      - for: ["node_modules", "dist", ".deps", ".next", ".turbo"]
+        task: internal-clean
+        vars:
+          NAME: "{{.ITEM}}"
+          RM: "{}"
+
+      - task: internal-clean
+        vars:
+          NAME: dist
+          RM: "{}/*"
+
+      - cmd: del /s /q "node_modules" # i have no clue if this will work
+        platforms: [windows]
+    aliases: [ca]
 
   rm-sd-dir:
     desc: This removes the Spacedrive data directory
@@ -76,18 +104,16 @@ tasks:
         platforms: [darwin]
       - cmd: rm -rf "$HOME/.local/share/spacedrive"
         platforms: [linux]
-      - cmd: echo "This is unsupported on Windows currently"
+      - cmd: rmdir /s /q "{{.USERPROFILE}}/AppData/Roaming/spacedrive" #?????
         platforms: [windows]
-      # - cmd: rmdir /s /q "{{.USERPROFILE}}/AppData/Roaming/spacedrive" #?????
-      #   platforms: [windows]
-      # prompt: This is untested, are you sure you'd like to run?
+        # prompt: This is untested, are you sure you'd like to run?
     aliases: [rmsddir]
 
   rm-dot-sd:
     desc: This removes all `.spacedrive` files from your `$HOME` directory
     dir: $HOME
     cmds:
-      - cmd: find . -name ".spacedrive" -type f -prune -exec echo "Removing {}" \; -exec rm -rf "{}" \;
+      - cmd: fd -gH --exclude ".git" --prune ".spacedrive" . -x rm -rf "{}" \; -x echo "Removing {}" \;
         platforms: [darwin, linux]
     aliases: [rmdotsd]
 
@@ -99,25 +125,45 @@ tasks:
       - pnpm prep
     aliases: [s]
 
-  # get-main-repo-name:
-  #   internal: true
-  #   cmds:
-  #     - cmd: "git remote show origin | sed -n '/HEAD branch/s/.*: //p'"
-  #       platforms: [darwin, linux]
-
-  new-lib:
-    desc: Create a new crate with hardened clippy lints
+  nuke:
+    desc: Nuke all Spacedrive related files (excluding `.spacedrive` files)
+    prompt: This can be catastrophic, are you sure you'd like to continue?
     cmds:
-      - cmd: cargo generate --git "{{.GITHUG_URL}}/{{.TEMPLATES_REPO}}" {{.CRATE_TEMPLATE}}
+      - task: clean
+      - task: rm-dot-sd
+      - task: rm-localstorage-and-caches
 
-  new-bin:
-    desc: Create a new binary with hardened clippy lints
+  internal-rm:
+    internal: true
     cmds:
-      - cmd: cargo generate --git "{{.GITHUG_URL}}/{{.TEMPLATES_REPO}}" {{.BINARY_TEMPLATE}}
+      - cmd: rm -rf "{{.NAME}}" && echo "Removing \"{{.NAME}}\""
+
+  rm-localstorage-and-caches:
+    desc: Removes all localStorage and cache related directories
+    platforms: [darwin]
+    cmds:
+      - for:
+          [
+            "$HOME/Library/WebKit/Spacedrive",
+            "$HOME/Library/Caches/Spacedrive",
+            "$HOME/Library/WebKit/com.spacedrive.desktop",
+            "$HOME/Library/Caches/com.spacedrive.desktop",
+          ]
+        task: internal-rm
+        vars:
+          NAME: "{{.ITEM}}"
+
+  ci:
+    desc: Run "CI" locally to see if it will pass
+    cmds:
+      - cmd: pnpm typecheck
+      - cmd: pnpm lint
+      - cmd: cargo fmt --all -- --check
+      - cmd: cargo clippy --workspace --all-features
 
   update:
     desc: Updates and overrides the current Taskfile from Github
     cmds:
       - 'echo "Pre-update hash: " && b3sum --no-names Taskfile.yml'
-      - "curl -s -o Taskfile.yml {{.REMOTE_TASKFILE_URL}}"
+      - curl -s -o Taskfile.yml "{{.REMOTE_TASKFILE_URL}}"
       - 'echo "Post-update hash: " && b3sum --no-names Taskfile.yml'
