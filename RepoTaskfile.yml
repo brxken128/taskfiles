@@ -8,11 +8,15 @@ silent: true
 #     dir: crates/crypto
 
 vars:
-  TASK_BINARY: task # the name of the task executable
+  TASK_BINARY: task
+  GITHUG_URL: github:brxken128
   PRIMARY_BRANCH: "main"
-  TEMPLATE_URL: "github:brxken128/template"
-  REMOTE_TASKFILE_NAME: "RepoTaskfile.yml"
-  REMOTE_TASKFILE_URL: "https://$GAT@raw.githubusercontent.com/{{.REMOTE_TASKFILE_REPO}}/{{.REMOTE_TASKFILE_BRANCH}}/{{.REMOTE_TASKFILE_NAME}}"
+  TASKFILE_REPO: taskfiles
+  TEMPLATES_REPO: "template"
+  TASKFILE_ALIAS: "RepoTaskfile.yml"
+  CRATE_TEMPLATE: crate-template
+  BINARY_TEMPLATE: binary-template
+  REMOTE_TASKFILE_URL: "https://$GAT@raw.githubusercontent.com/{{.TASKFILE_REPO}}/{{.PRIMARY_BRANCH}}/{{.TASKFILE_ALIAS}}"
 
 tasks:
   default:
@@ -72,14 +76,16 @@ tasks:
         platforms: [darwin]
       - cmd: rm -rf "$HOME/.local/share/spacedrive"
         platforms: [linux]
-      - cmd: rmdir /s /q "{{.USERPROFILE}}/AppData/Roaming/spacedrive" #?????
+      - cmd: echo "This is unsupported on Windows currently"
         platforms: [windows]
-        # prompt: This is untested, are you sure you'd like to run?
+      # - cmd: rmdir /s /q "{{.USERPROFILE}}/AppData/Roaming/spacedrive" #?????
+      #   platforms: [windows]
+      # prompt: This is untested, are you sure you'd like to run?
     aliases: [rmsddir]
 
   rm-dot-sd:
     desc: This removes all `.spacedrive` files from your `$HOME` directory
-    dir: "$HOME"
+    dir: $HOME
     cmds:
       - cmd: find . -name ".spacedrive" -type f -prune -exec echo "Removing {}" \; -exec rm -rf "{}" \;
         platforms: [darwin, linux]
@@ -102,16 +108,16 @@ tasks:
   new-lib:
     desc: Create a new crate with hardened clippy lints
     cmds:
-      - cmd: cargo generate --git "{{.TEMPLATE_URL}" lib
+      - cmd: cargo generate --git "{{.GITHUG_URL}}/{{.TEMPLATES_REPO}}" {{.CRATE_TEMPLATE}}
 
   new-bin:
     desc: Create a new binary with hardened clippy lints
     cmds:
-      - cmd: cargo generate --git "{{.TEMPLATE_URL}}" bin
+      - cmd: cargo generate --git "{{.GITHUG_URL}}/{{.TEMPLATES_REPO}}" {{.BINARY_TEMPLATE}}
 
   update:
     desc: Updates and overrides the current Taskfile from Github
     cmds:
-      - "echo \"Pre-update hash: \" && b3sum --no-names Taskfile.yml"
-      - curl -s -o Taskfile.yml "{{.REMOTE_TASKFILE_URL}}"
-      - "echo \"Post-update hash: \" && b3sum --no-names Taskfile.yml"
+      - 'echo "Pre-update hash: " && b3sum --no-names Taskfile.yml'
+      - "curl -s -o Taskfile.yml {{.REMOTE_TASKFILE_URL}}"
+      - 'echo "Post-update hash: " && b3sum --no-names Taskfile.yml'
