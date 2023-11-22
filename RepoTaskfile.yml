@@ -62,15 +62,13 @@ tasks:
     cmds:
       # unix
       - cmd: until cargo clean; do; done
-        platforms: [darwin, linux]
+        platforms: [darwin, linux, windows]
       - task: internal-clean
         vars:
           NAME: node_modules
           RM: "{}"
 
       # windows
-      - cmd: del /s /q "target" # manually delete as sometimes `cargo clean` fails
-        platforms: [windows]
       - cmd: del /s /q "node_modules" # i have no clue if this will work
         platforms: [windows]
     aliases: [c]
