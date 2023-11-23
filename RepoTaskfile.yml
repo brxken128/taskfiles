@@ -19,8 +19,8 @@ tasks:
     cmd: "{{.TASK_BINARY}} --list-all"
 
   script-setup:
-    desc: "Required to run the script: Installs `fd` (very fast `find` alternative)"
-    cmd: cargo install fd-find
+    desc: "Required to run the script: Installs `fd` (very fast `find` alternative) and `b3sum`"
+    cmd: cargo install fd-find b3sum
 
   # base tasks
   dev:
