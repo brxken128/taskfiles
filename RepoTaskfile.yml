@@ -50,11 +50,11 @@ tasks:
       - task: setup
       - task: build
 
-  # internal-clean:
-  #   internal: true
-  #   cmds:
-  #     - cmd: fd -gIH --exclude ".git" --exclude ".github" --prune "{{.NAME}}" . -x rm -rf "{{.RM}}" \; -x echo "Removing {{.RM}}" \;
-  #       platforms: [darwin, linux]
+  internal-clean:
+    internal: true
+    cmds:
+      - cmd: fd -gIH --exclude ".git" --exclude ".github" --prune "{{.NAME}}" . -x rm -rf "{{.RM}}" \; -x echo "Removing {{.RM}}" \;
+        platforms: [darwin, linux]
 
   # cleaning output dirs
   clean:
