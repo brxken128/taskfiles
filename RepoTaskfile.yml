@@ -50,11 +50,11 @@ tasks:
       - task: setup
       - task: build
 
-  internal-clean:
-    internal: true
-    cmds:
-      - cmd: fd -gIH --exclude ".git" --exclude ".github" --prune "{{.NAME}}" . -x rm -rf "{{.RM}}" \; -x echo "Removing {{.RM}}" \;
-        platforms: [darwin, linux]
+  # internal-clean:
+  #   internal: true
+  #   cmds:
+  #     - cmd: fd -gIH --exclude ".git" --exclude ".github" --prune "{{.NAME}}" . -x rm -rf "{{.RM}}" \; -x echo "Removing {{.RM}}" \;
+  #       platforms: [darwin, linux]
 
   # cleaning output dirs
   clean:
@@ -73,26 +73,26 @@ tasks:
         platforms: [windows]
     aliases: [c]
 
-  clean-all:
-    desc: Clean all output directories (on Windows, only the top `node_modules` is removed).
-    cmds:
-      - cmd: until cargo clean; do; done
-        platforms: [darwin, linux, windows] # should work on windows due to bash interpretation
+  # clean-all:
+  #   desc: Clean all output directories (on Windows, only the top `node_modules` is removed).
+  #   cmds:
+  #     - cmd: until cargo clean; do; done
+  #       platforms: [darwin, linux, windows] # should work on windows due to bash interpretation
 
-      - for: ["node_modules", ".deps", ".next", ".turbo"]
-        task: internal-clean
-        vars:
-          NAME: "{{.ITEM}}"
-          RM: "{}"
+  #     - for: ["node_modules", ".deps", ".next", ".turbo"]
+  #       task: internal-clean
+  #       vars:
+  #         NAME: "{{.ITEM}}"
+  #         RM: "{}"
 
-      - task: internal-clean
-        vars:
-          NAME: dist
-          RM: "{}/*"
+  #     - task: internal-clean
+  #       vars:
+  #         NAME: dist
+  #         RM: "{}/*"
 
-      - cmd: del /s /q "node_modules" # i have no clue if this will work
-        platforms: [windows]
-    aliases: [ca]
+  #     - cmd: del /s /q "node_modules" # i have no clue if this will work
+  #       platforms: [windows]
+  #   aliases: [ca]
 
   rm-sd-dir:
     desc: This removes the Spacedrive data directory
@@ -124,7 +124,7 @@ tasks:
 
   nuke:
     desc: Nuke all Spacedrive related files (excluding `.spacedrive` files)
-    prompt: This can be catastrophic, are you sure you'd like to continue?
+    prompt: This can be catastrophic, are you sure you would like to continue?
     cmds:
       - task: clean
       - task: rm-dot-sd
