@@ -18,9 +18,9 @@ tasks:
     desc: Lists all commands
     cmd: "{{.TASK_BINARY}} --list-all"
 
-  script-setup:
-    desc: "Required to run the script: Installs `fd` (very fast `find` alternative) and `b3sum`"
-    cmd: cargo install fd-find b3sum
+  script:setup:
+    desc: Required to run the script. Installs `fd` (very fast `find` alternative)
+    cmd: cargo install fd-find
 
   # base tasks
   dev:
@@ -29,6 +29,12 @@ tasks:
       - pnpm tauri dev --no-watch
     aliases: [d]
 
+  dev:web:clean:
+    desc: Cleans output directories and runs `sd-server` and Spacedrive web
+    cmds:
+      - pnpm dev:web
+    aliases: [w]
+
   build:
     desc: Runs `pnpm tauri build`
     cmds:
@@ -36,15 +42,15 @@ tasks:
     aliases: [b]
 
   # clean base tasks
-  cdev:
-    desc: Cleans all output directories and runs `pnpm i, prep, desktop dev`
+  dev:clean:
+    desc: Cleans output directories and runs `pnpm i, prep, desktop dev`
     cmds:
       - task: clean
       - task: setup
       - task: dev
 
-  cbuild:
-    desc: Cleans all output directories and runs `pnpm i, prep, desktop build`
+  build:clean:
+    desc: Cleans output directories and runs `pnpm i, prep, desktop build`
     cmds:
       - task: clean
       - task: setup
@@ -58,7 +64,7 @@ tasks:
 
   # cleaning output dirs
   clean:
-    desc: Clean all output directories (on Windows, only the top `node_modules` is removed).
+    desc: Cleans `target/` and all `node_modules`.
     cmds:
       # unix
       - cmd: until cargo clean; do; done
@@ -67,35 +73,29 @@ tasks:
         vars:
           NAME: node_modules
           RM: "{}"
-
-      # windows
-      - cmd: del /s /q "node_modules" # i have no clue if this will work
-        platforms: [windows]
     aliases: [c]
 
-  # clean-all:
-  #   desc: Clean all output directories (on Windows, only the top `node_modules` is removed).
-  #   cmds:
-  #     - cmd: until cargo clean; do; done
-  #       platforms: [darwin, linux, windows] # should work on windows due to bash interpretation
+  clean:full:
+    desc: Cleans every output directory (`target`, `node_modules`, `dist`, `.deps`, `.next`, `.turbo`).
+    cmds:
+      - cmd: until cargo clean; do; done
+        platforms: [darwin, linux]
 
-  #     - for: ["node_modules", ".deps", ".next", ".turbo"]
-  #       task: internal-clean
-  #       vars:
-  #         NAME: "{{.ITEM}}"
-  #         RM: "{}"
+      - for: ["node_modules", ".deps", ".next", ".turbo"]
+        task: internal-clean
+        vars:
+          NAME: "{{.ITEM}}"
+          RM: "{}"
 
-  #     - task: internal-clean
-  #       vars:
-  #         NAME: dist
-  #         RM: "{}/*"
+      - task: internal-clean
+        vars:
+          NAME: dist
+          RM: "{}/*"
+    aliases: [ca]
 
-  #     - cmd: del /s /q "node_modules" # i have no clue if this will work
-  #       platforms: [windows]
-  #   aliases: [ca]
-
-  rm-sd-dir:
+  rm:data:
     desc: This removes the Spacedrive data directory
+    prompt: This will delete the Spacedrive data directory. Are you sure you want to continue?
     cmds:
       - cmd: rm -rf "$HOME/Library/Application Support/spacedrive"
         platforms: [darwin]
@@ -104,15 +104,14 @@ tasks:
       - cmd: rmdir /s /q "{{.USERPROFILE}}/AppData/Roaming/spacedrive" #?????
         platforms: [windows]
         # prompt: This is untested, are you sure you'd like to run?
-    aliases: [rmsddir]
 
-  rm-dot-sd:
+  rm:.spacedrive-files:
     desc: This removes all `.spacedrive` files from your `$HOME` directory
+    prompt: This will delete .spacedrive files in the current path (recursively). Are you sure you want to continue?
     dir: $HOME
     cmds:
       - cmd: fd -gH --exclude ".git" --prune ".spacedrive" . -x rm -rf "{}" \; -x echo "Removing {}" \;
         platforms: [darwin, linux]
-    aliases: [rmdotsd]
 
   # setup stuff
   setup:
@@ -122,33 +121,90 @@ tasks:
       - pnpm prep
     aliases: [s]
 
-  nuke:
-    desc: Nuke all Spacedrive related files (excluding `.spacedrive` files)
-    prompt: This can be catastrophic, are you sure you would like to continue?
-    cmds:
-      - task: clean
-      - task: rm-dot-sd
-      - task: rm-localstorage-and-caches
-
   internal-rm:
     internal: true
     cmds:
       - cmd: rm -rf "{{.NAME}}" && echo "Removing \"{{.NAME}}\""
 
-  rm-localstorage-and-caches:
+  rm:localstorage:
     desc: Removes all localStorage and cache related directories
-    platforms: [darwin]
+    platforms: [darwin, linux]
     cmds:
-      - for:
-          [
-            "$HOME/Library/WebKit/Spacedrive",
-            "$HOME/Library/Caches/Spacedrive",
-            "$HOME/Library/WebKit/com.spacedrive.desktop",
-            "$HOME/Library/Caches/com.spacedrive.desktop",
-          ]
-        task: internal-rm
-        vars:
-          NAME: "{{.ITEM}}"
+      - cmd: rm -rf "$HOME/Library/WebKit/Spacedrive" "$HOME/Library/Caches/Spacedrive" "$HOME/Library/WebKit/com.spacedrive.desktop" "$HOME/Library/Caches/com.spacedrive.desktop"
+        platforms: [darwin]
+      - cmd: rm -rf  "~/.local/share/com.spacedrive.desktop/" "~/.cache/spacedrive"
+        platforms: [linux]
+
+  data:info:
+    desc: View info about your Spacedrive data backup
+    platforms: [darwin, linux]
+    cmds:
+      - cmd: cat "$HOME/spacedrive-backup/BACKUP"
+        platforms: [darwin, linux]
+
+  data:backup:
+    desc: Backup your Spacedrive data
+    prompt: This will delete your current Spacedrive backup (at $HOME/spacedrive-backup) and create one from your current Spacedrive data directory. Are you sure you want to continue?
+    platforms: [darwin, linux]
+    cmds:
+      - cmd: rm -rf "$HOME/spacedrive-backup"
+        platforms: [darwin, linux]
+      - cmd: rsync -arc "$HOME/Library/Application Support/spacedrive/" "$HOME/spacedrive-backup/"
+        platforms: [darwin]
+      - cmd: rsync -arc "$HOME/.local/share/spacedrive/" "$HOME/spacedrive-backup/"
+        platforms: [linux]
+      - cmd: echo "This backup was created at $(date +%Y-%m-%d-%T)" > "$HOME/spacedrive-backup/BACKUP"
+        platforms: [darwin, linux]
+
+  data:restore:
+    desc: Restore your Spacedrive data
+    prompt: This will delete your Spacedrive data directory and restore it with the one found in $HOME/spacedrive-backup. Are you sure you want to continue?
+    platforms: [darwin, linux]
+    cmds:
+      - cmd: rm -rf "$HOME/Library/Application Support/spacedrive"
+        platforms: [darwin]
+      - cmd: rm -rf "$HOME/.local/share/spacedrive"
+        platforms: [linux]
+      - cmd: rsync -arc "$HOME/spacedrive-backup/" "$HOME/Library/Application Support/spacedrive/"
+        platforms: [darwin]
+      - cmd: rsync -arc "$HOME/spacedrive-backup/" "$HOME/.local/share/spacedrive/"
+        platforms: [linux]
+
+  # rm-localstorage-macos:
+  #   internal: true
+  #   platforms: [darwin]
+  #   cmds:
+  #     - for:
+  #         [
+  #           "$HOME/Library/WebKit/Spacedrive",
+  #           "$HOME/Library/Caches/Spacedrive",
+  #           "$HOME/Library/WebKit/com.spacedrive.desktop",
+  #           "$HOME/Library/Caches/com.spacedrive.desktop",
+  #         ]
+  #       task: internal-rm
+  #       vars:
+  #         NAME: "{{.ITEM}}"
+
+  # rm-localstorage-linux:
+  #   internal: true
+  #   platforms: [linux]
+  #   cmds:
+  #     - for:
+  #       [
+  #         "~/.local/share/com.spacedrive.desktop/",
+  #         "~/.cache/spacedrive",
+  #       ]
+  #       task: internal-rm
+  #       vars:
+  #         NAME: "{{.ITEM}}"
+
+  # nuke:
+  #   desc: Nuke all Spacedrive related files (excluding `.spacedrive` files)
+  #   prompt: This can be catastrophic, are you sure you'd like to continue?
+  #   cmds:
+  #     - task: clean
+  #     - task: rm:data
+  #     - task: rm:localstorage
 
   ci:
     desc: Run "CI" locally to see if it will pass
