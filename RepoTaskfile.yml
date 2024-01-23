@@ -29,11 +29,21 @@ tasks:
       - pnpm tauri dev --no-watch
     aliases: [d]
 
-  dev:web:clean:
-    desc: Cleans output directories and runs `sd-server` and Spacedrive web
+  dev:web:
+    desc: Runs `sd-server` and Spacedrive web
     cmds:
       - pnpm dev:web
-    aliases: [w]
+    aliases: [d:w]
+
+  dev:web:clean:
+    desc: Cleans output directories and runs `sd-server` and Spacedrive web
+    platforms: [darwin]
+    cmds:
+      - task: clean
+      - task: setup
+      - task: dev
+      - pnpm dev:web
+    aliases: [d:w:c]
 
   build:
     desc: Runs `pnpm tauri build`
@@ -44,27 +54,41 @@ tasks:
   # clean base tasks
   dev:clean:
     desc: Cleans output directories and runs `pnpm i, prep, desktop dev`
+    platforms: [darwin]
     cmds:
       - task: clean
       - task: setup
       - task: dev
+    aliases: [d:c]
 
   build:clean:
     desc: Cleans output directories and runs `pnpm i, prep, desktop build`
+    platforms: [darwin]
     cmds:
       - task: clean
       - task: setup
       - task: build
+    aliases: [b:c]
+
+  build:debug:
+    desc: Builds the app with the console and other debugging tools enabled
+    dir: apps/desktop
+    cmds:
+      - cmd: pnpm tauri build --debug
+    aliases: [b:d]
 
   internal-clean:
     internal: true
+    platforms: [darwin]
     cmds:
       - cmd: fd -gIH --exclude ".git" --exclude ".github" --prune "{{.NAME}}" . -x rm -rf "{{.RM}}" \; -x echo "Removing {{.RM}}" \;
+        # - cmd: fd -gIH --exclude ".git" --exclude ".github" --prune "{{.NAME}}" . -x rm -rf "{{.RM}}" \; -x echo "Removing {{.RM}}" \;
         platforms: [darwin, linux]
 
   # cleaning output dirs
   clean:
     desc: Cleans `target/` and all `node_modules`.
+    platforms: [darwin]
     cmds:
       # unix
       - cmd: until cargo clean; do; done
@@ -75,8 +99,9 @@ tasks:
           RM: "{}"
     aliases: [c]
 
-  clean:full:
-    desc: Cleans every output directory (`target`, `node_modules`, `dist`, `.deps`, `.next`, `.turbo`).
+  clean:build:
+    desc: Cleans every build artifact and directory (`target`, `node_modules`, `dist`, `.deps`, `.next`, `.turbo`).
+    platforms: [darwin]
     cmds:
       - cmd: until cargo clean; do; done
         platforms: [darwin, linux]
@@ -91,9 +116,9 @@ tasks:
         vars:
           NAME: dist
           RM: "{}/*"
-    aliases: [ca]
+    aliases: [c:b]
 
-  rm:data:
+  clean:data:
     desc: This removes the Spacedrive data directory
     prompt: This will delete the Spacedrive data directory. Are you sure you want to continue?
     cmds:
@@ -104,14 +129,44 @@ tasks:
       - cmd: rmdir /s /q "{{.USERPROFILE}}/AppData/Roaming/spacedrive" #?????
         platforms: [windows]
         # prompt: This is untested, are you sure you'd like to run?
+    aliases: [c:d]
 
-  rm:.spacedrive-files:
+  clean:localstorage:
+    desc: Removes all localStorage and cache related directories
+    platforms: [darwin]
+    cmds:
+      - cmd: rm -rf "$HOME/Library/WebKit/Spacedrive" "$HOME/Library/Caches/Spacedrive" "$HOME/Library/WebKit/com.spacedrive.desktop" "$HOME/Library/Caches/com.spacedrive.desktop"
+        platforms: [darwin]
+      - cmd: rm -rf  "~/.local/share/com.spacedrive.desktop/" "~/.cache/spacedrive"
+        platforms: [linux]
+    aliases: [c:ls]
+
+  clean:spacedrive-files:
     desc: This removes all `.spacedrive` files from your `$HOME` directory
-    prompt: This will delete .spacedrive files in the current path (recursively). Are you sure you want to continue?
+    platforms: [darwin]
+    prompt: This will delete .spacedrive files in the $HOME directory, recursively. Are you sure you want to continue?
     dir: $HOME
     cmds:
       - cmd: fd -gH --exclude ".git" --prune ".spacedrive" . -x rm -rf "{}" \; -x echo "Removing {}" \;
-        platforms: [darwin, linux]
+    aliases: [c:sf]
+
+  clean:all:
+    desc: Cleans all build artifacts, the Spacedrive data directory and Spacedrive's `localStorage`
+    platforms: [darwin]
+    prompt: |
+      This is intended for rather rare scenarios, however it will sometimes solve an issue. It should primarily be a last resort.
+
+      This will delete:
+        - Every build artifact and directory (`target`, `node_modules`, `dist`, `.deps`, `.next`, `.turbo`)
+        - The Spacedrive data directory (back this up using `task data:backup`)
+        - The Spacedrive `localStorage`
+
+      Are you sure you want to continue?
+    cmds:
+      - task: clean:build
+      - task: clean:localstorage
+      - task: clean:data
+    aliases: [c:a]
 
   # setup stuff
   setup:
@@ -126,49 +181,59 @@ tasks:
     cmds:
       - cmd: rm -rf "{{.NAME}}" && echo "Removing \"{{.NAME}}\""
 
-  rm:localstorage:
-    desc: Removes all localStorage and cache related directories
-    platforms: [darwin, linux]
-    cmds:
-      - cmd: rm -rf "$HOME/Library/WebKit/Spacedrive" "$HOME/Library/Caches/Spacedrive" "$HOME/Library/WebKit/com.spacedrive.desktop" "$HOME/Library/Caches/com.spacedrive.desktop"
-        platforms: [darwin]
-      - cmd: rm -rf  "~/.local/share/com.spacedrive.desktop/" "~/.cache/spacedrive"
-        platforms: [linux]
-
   data:info:
     desc: View info about your Spacedrive data backup
     platforms: [darwin, linux]
     cmds:
-      - cmd: cat "$HOME/spacedrive-backup/BACKUP"
+      - cmd: cat "$HOME/spacedrive-backups/latest/BACKUP"
         platforms: [darwin, linux]
+    aliases: [d:i]
 
   data:backup:
     desc: Backup your Spacedrive data
-    prompt: This will delete your current Spacedrive backup (at $HOME/spacedrive-backup) and create one from your current Spacedrive data directory. Are you sure you want to continue?
+    prompt: This will create a backup from your current Spacedrive data directory and tag it as the latest. Are you sure you want to continue?
     platforms: [darwin, linux]
     cmds:
-      - cmd: rm -rf "$HOME/spacedrive-backup"
+      - cmd: mkdir -p "$HOME/spacedrive-backups"
         platforms: [darwin, linux]
-      - cmd: rsync -arc "$HOME/Library/Application Support/spacedrive/" "$HOME/spacedrive-backup/"
+        # tar them
+      - cmd: rm -f "$HOME/spacedrive-backups/latest"
+        platforms: [darwin, linux]
+      - cmd: DT=$(date +%F-%H%M%S); mkdir "$HOME/spacedrive-backups/$DT" && ln -s "$HOME/spacedrive-backups/$DT" "$HOME/spacedrive-backups/latest"
+        platforms: [darwin, linux]
+      - cmd: rsync -arc "$HOME/Library/Application Support/spacedrive/" "$HOME/spacedrive-backups/latest"
         platforms: [darwin]
-      - cmd: rsync -arc "$HOME/.local/share/spacedrive/" "$HOME/spacedrive-backup/"
+      - cmd: rsync -arc "$HOME/.local/share/spacedrive/" "$HOME/spacedrive-backups/latest"
         platforms: [linux]
-      - cmd: echo "This backup was created at $(date +%Y-%m-%d-%T)" > "$HOME/spacedrive-backup/BACKUP"
+      - cmd: echo "This backup was created at $(date +%F-%T)" > "$HOME/spacedrive-backups/latest/BACKUP"
         platforms: [darwin, linux]
+    aliases: [d:b]
 
   data:restore:
     desc: Restore your Spacedrive data
-    prompt: This will delete your Spacedrive data directory and restore it with the one found in $HOME/spacedrive-backup. Are you sure you want to continue?
+    prompt: This will delete your Spacedrive data directory and restore it with the one found at $HOME/spacedrive-backups/latest. Are you sure you want to continue?
     platforms: [darwin, linux]
     cmds:
       - cmd: rm -rf "$HOME/Library/Application Support/spacedrive"
         platforms: [darwin]
       - cmd: rm -rf "$HOME/.local/share/spacedrive"
         platforms: [linux]
-      - cmd: rsync -arc "$HOME/spacedrive-backup/" "$HOME/Library/Application Support/spacedrive/"
+      - cmd: rsync -arc "$HOME/spacedrive-backups/latest/" "$HOME/Library/Application Support/spacedrive/"
         platforms: [darwin]
-      - cmd: rsync -arc "$HOME/spacedrive-backup/" "$HOME/.local/share/spacedrive/"
+      - cmd: rsync -arc "$HOME/spacedrive-backups/latest/" "$HOME/.local/share/spacedrive/"
         platforms: [linux]
+    aliases: [d:r]
+
+  data:archive:
+    desc: Archive and compress all of your backups
+    prompt: This will compress all of your backups. Are you sure you want to continue?
+    platforms: [darwin, linux]
+    env:
+      XZ_OPT: -9
+    cmds:
+      - cmd: XZ_OPT=-9 fd -d 1 -t d . "$HOME/spacedrive-backups" -x DIR={} && tar cfJ "$DIR.tar.xz" -C "$DIR" . && rm -r "$DIR" ; -x echo "Archive created as {}.tar.xz and deleted {}/" \;
+        platforms: [darwin, linux]
+    aliases: [d:a]
 
   # rm-localstorage-macos:
   #   internal: true
