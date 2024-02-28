@@ -18,7 +18,7 @@ tasks:
     desc: Lists all commands
     cmd: "{{.TASK_BINARY}} --list-all"
 
-  install-cargo-tools:
+  install:
     desc: Install all of the cargo prerequisites
     cmds:
       - cargo install cargo-nextest cargo-audit cargo-hack cargo-watch b3sum
@@ -29,7 +29,7 @@ tasks:
       - cmd: cargo install cross --git https://github.com/cross-rs/cross
         platforms: [amd64]
 
-  install-cargo-tools-extras:
+  install:extras:
     desc: Install extra (but very helpful) tools
     cmds:
       - cargo install cargo-llvm-lines cargo-expand cargo-show-asm cargo-unused-features cargo-msrv cargo-generate cargo-criterion zellij hyperfine fd-find cargo-outdated
@@ -51,13 +51,13 @@ tasks:
     cmds:
       - cargo watch -cx 'nextest run --release --no-fail-fast'
 
-  miri:
+  test:miri:
     platforms: [amd64]
     desc: Run all tests for the current package with miri
     cmds:
       - cargo +nightly miri nextest run -j12 --features blake3/no_sse2
 
-  check-features:
+  test:feature-combos:
     desc: Check every combination of features to ensure that they are all compatible, regardless of which are enabled
     cmds:
       - cargo hack check --feature-powerset
@@ -67,12 +67,17 @@ tasks:
     cmds:
       - cargo nextest run --release --all-features
 
-  test-all:
+  test:ignored:
     desc: Run all tests (including ignored) with all features
     cmds:
       - cargo nextest run --release --all-features --run-ignored all
 
-  cross-test:
+  test:all:
+    desc: Run `test:ignored` and `test:feature-combos` (and `test:all-architectures` on `amd64`)
+    cmds:
+      - cargo nextest run --release --all-features --run-ignored all
+
+  test:cross:
     desc: Requires either docker or podman for `cross`
     platforms: [amd64]
     internal: true
@@ -81,7 +86,7 @@ tasks:
     cmds:
       - cross +nightly test --release --all-targets --all-features --target {{.TARGET}}
 
-  test-all-architectures:
+  test:all-architectures:
     platforms: [amd64]
     internal: true
     cmds:
@@ -93,18 +98,18 @@ tasks:
             "armv7-unknown-linux-gnueabi",
             "x86_64-pc-windows-gnu",
           ]
-        task: cross-test
+        task: test:cross
         vars:
           TARGET: "{{.ITEM}}"
 
-  ci:
+  test:ci:
+    desc: Simulates CI to ensure everything will pass
     deps: [clean]
     cmds:
+      - cargo fmt --all -- --check
       - cargo clippy --release --all-features --all-targets
-      - task: check-features
-      - task: test-all-architectures
-      - task: miri
-      - task: test-all
+      - task: test:miri
+      - task: test:all
 
   internal-clean:
     internal: true
