@@ -35,9 +35,15 @@ tasks:
       - pnpm dev:web
     aliases: [d:w]
 
+  dev:full:web:
+    desc: Runs `pnpm i, prep` and then `sd-server` and Spacedrive web
+    cmds:
+      - pnpm dev:web
+    aliases: [d:w]
+
   dev:web:clean:
-    desc: Cleans output directories and runs `sd-server` and Spacedrive web
-    platforms: [darwin]
+    desc: Cleans Rust output directories and runs `sd-server` and Spacedrive web
+    platforms: [darwin, linux, windows]
     cmds:
       - task: clean
       - task: setup
@@ -53,22 +59,46 @@ tasks:
 
   # clean base tasks
   dev:clean:
-    desc: Cleans output directories and runs `pnpm i, prep, desktop dev`
-    platforms: [darwin]
+    desc: Cleans Rust output directories and runs `pnpm i, prep, tauri dev`
+    platforms: [darwin, linux, windows]
     cmds:
       - task: clean
       - task: setup
       - task: dev
     aliases: [d:c]
 
+  dev:full:
+    desc: Runs `pnpm i, prep, tauri dev`
+    platforms: [darwin, linux, windows]
+    cmds:
+      - task: setup
+      - task: dev
+    aliases: [d:f]
+
   build:clean:
-    desc: Cleans output directories and runs `pnpm i, prep, desktop build`
-    platforms: [darwin]
+    desc: Cleans Rust output directories and runs `pnpm i, prep, tauri build`
+    platforms: [darwin, linux, windows]
     cmds:
       - task: clean
       - task: setup
       - task: build
     aliases: [b:c]
+
+  build:full:
+    desc: Runs `pnpm i, prep, tauri build`
+    platforms: [darwin, linux, windows]
+    cmds:
+      - task: setup
+      - task: build
+    aliases: [b:f]
+
+  build:full:debug:
+    desc: Runs `pnpm i, prep, tauri build --debug` the app with the console and other debugging tools enabled
+    dir: apps/desktop
+    cmds:
+      - task: setup
+      - cmd: pnpm tauri build --debug
+    aliases: [b:f:d]
 
   build:debug:
     desc: Builds the app with the console and other debugging tools enabled
@@ -83,21 +113,27 @@ tasks:
     cmds:
       - cmd: fd -gIH --exclude ".git" --exclude ".github" --prune "{{.NAME}}" . -x rm -rf "{{.RM}}" \; -x echo "Removing {{.RM}}" \;
         # - cmd: fd -gIH --exclude ".git" --exclude ".github" --prune "{{.NAME}}" . -x rm -rf "{{.RM}}" \; -x echo "Removing {{.RM}}" \;
-        platforms: [darwin, linux]
+        platforms: [darwin]
 
   # cleaning output dirs
   clean:
-    desc: Cleans `target/` and all `node_modules`.
+    desc: Runs `cargo clean`
+    platforms: [darwin, linux, windows]
+    cmds:
+      - cmd: until cargo clean; do; done
+    aliases: [c]
+
+  clean:artifacts:
+    desc: Cleans `target/` and all `node_modules`
     platforms: [darwin]
     cmds:
       # unix
       - cmd: until cargo clean; do; done
-        platforms: [darwin, linux, windows]
       - task: internal-clean
         vars:
           NAME: node_modules
           RM: "{}"
-    aliases: [c]
+    aliases: [c:ar]
 
   clean:build:
     desc: Cleans every build artifact and directory (`target`, `node_modules`, `dist`, `.deps`, `.next`, `.turbo`).
@@ -234,6 +270,11 @@ tasks:
       - cmd: XZ_OPT=-9 fd -d 1 -t d . "$HOME/spacedrive-backups" -x DIR={} && tar cfJ "$DIR.tar.xz" -C "$DIR" . && rm -r "$DIR" ; -x echo "Archive created as {}.tar.xz and deleted {}/" \;
         platforms: [darwin, linux]
     aliases: [d:a]
+
+  sync:main:
+    desc: Fetch the current `main` branch
+    cmds:
+      - git fetch origin main:main
 
   # rm-localstorage-macos:
   #   internal: true
